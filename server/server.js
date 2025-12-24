@@ -5,6 +5,7 @@ import connectDB from "./configs/db.js";
 import authRoutes from './routes/auth.routes.js';
 import chatRouter from './routes/chat.routes.js';
 import { authMiddleware } from './middlewares/auth.middleware.js';
+import messageRouter from "./routes/message.routes.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get('/',(req,res)=>{
 // Auth routes
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRouter);
+app.use('/api/message', messageRouter);
 
 
 
