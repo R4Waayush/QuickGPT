@@ -2,16 +2,16 @@ import express from 'express';
 import { signup, login } from '../controllers/auth.controller.js';
 import { authMiddleware, validateRequest } from '../middlewares/auth.middleware.js';
 
-const router = express.Router();
+const authRouter = express.Router();
 
 // Signup route
-router.post('/signup', validateRequest(['name', 'email', 'password']), signup);
+authRouter.post('/signup', validateRequest(['name', 'email', 'password']), signup);
 
 // Login route
-router.post('/login', validateRequest(['email', 'password']), login);
+authRouter.post('/login', validateRequest(['email', 'password']), login);
 
 //Auth route 
-router.get('/data', authMiddleware,(req,res)=>{
+authRouter.get('/data', authMiddleware,(req,res)=>{
     res.json({
         success: true,
         message: 'Authentication working! You are authenticated.',
@@ -24,5 +24,5 @@ router.get('/data', authMiddleware,(req,res)=>{
     });
 });
 
-export default router;
+export default authRouter;
 
