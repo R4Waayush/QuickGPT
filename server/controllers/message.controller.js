@@ -33,7 +33,7 @@ export const textMsgController = async (req, res) => {
     });
 
     const { choices } = await openai.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       messages: [
         {
           role: "user",
@@ -43,14 +43,15 @@ export const textMsgController = async (req, res) => {
     });
 
     const reply = {
-      ...choices[0].messages,
+      role: "assistant",
+      content: choices[0].message.content,
       timeStamp: Date.now(),
       isImage: false,
     };
 
-    res.status(200).json({ message: "Message added", chat });
-
     chat.messages.push(reply);
+
+    res.status(200).json({ success: true, message: "Message added", reply });
 
     await chat.save();
 
@@ -89,43 +90,49 @@ export const imageMsgController = async (req, res) => {
     const encodedPrompt = encodeURIComponent(prompt);
 
     //construct imageKit AI gen url
-    const generateImgUrl = `${process.env.IMAGEKIT_URL_ENDPOINT}/ik-genimg-prompt-${encodedPrompt}/quickGpt/${Date.now()}.png?tr=w-800,h-800`;
+    const generateImgUrl = `${
+      process.env.IMAGEKIT_URL_ENDPOINT
+    }/ik-genimg-prompt-${encodedPrompt}/quickGpt/${Date.now()}.png?tr=w-800,h-800`;
 
     //trigger generation by fetching from image kit
-    const aiImgResponse = await axios.get(generateImgUrl, {responseType:"arraybuffer"})
+    const aiImgResponse = await axios.get(generateImgUrl, {
+      responseType: "arraybuffer",
+    });
 
     //Convert to base64
-    const base64Img = `data:image/png;base64${Buffer.from(aiImgResponse.data,"binary").toString('base64')}`
+    const base64Img = `data:image/png;base64,${Buffer.from(
+      aiImgResponse.data,
+      "binary"
+    ).toString("base64")}`;
 
     //upload to image-kit
     const uploadResponse = await imagekit.files.upload({
       file: base64Img,
       fileName: `${Date.now()}.png`,
-      folder: "quickGpt"
-    })
+      folder: "quickGpt",
+    });
 
     const reply = {
-      role:'assistant',
-      content : uploadResponse.url,
+      role: "assistant",
+      content: uploadResponse.url,
       timeStamp: Date.now(),
       isImage: true,
-      isPublished
+      isPublished,
     };
 
     res.json({
-      success:true,
-      reply
-    })
+      success: true,
+      reply,
+    });
 
     chat.messages.push(reply);
 
     await chat.save();
     await User.updateOne({ _id: userId }, { $inc: { credits: -2 } });
-
   } catch (error) {
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
